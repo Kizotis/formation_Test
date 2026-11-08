@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b231f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cricket">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<!-- app:start -->
+<title>Cricket Fléchettes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Cabin+Sketch:wght@400;700&display=swap">
+<style>
+/* Layout: one-screen chalkboard. Numbers run down the rows, players across, S/D/T throw pad on the right of each row. */
+:root{
+  --slate:#1b231f;      /* chalkboard */
+  --slate-2:#232e28;    /* raised panel */
+  --slate-3:#2c3a33;    /* hover / active column */
+  --line:rgba(236,233,223,.11);
+  --chalk:#ece9df;
+  --chalk-dim:#9aa59d;
+  --red:#c9392f;        /* board double ring */
+  --green:#24864d;      /* board treble ring */
+  --sisal:#e2d3a8;      /* board cream */
+  --gold:#e8b84a;
+  --display:"Cabin Sketch","Chalkboard SE","Marker Felt",cursive;
+  --ui:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --btn:clamp(46px,13vw,72px);
+  --lab:clamp(38px,10vw,56px);
+  color-scheme:dark;
+}
+html{box-sizing:border-box;height:100%;background:var(--slate)}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;background:var(--slate);color:var(--chalk);font-family:var(--ui);font-size:16px;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:2px solid var(--sisal);outline-offset:2px}
+.screen{height:100%;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ---------- Setup ---------- */
+#setup{overflow-y:auto;padding-block:20px 28px;gap:22px;max-width:560px;margin-inline:auto;width:100%}
+.brand{display:flex;align-items:center;gap:14px}
+.brand svg{width:54px;height:54px;flex:none}
+.brand h1{font-family:var(--display);font-weight:700;font-size:2.6rem;line-height:1;margin:0;letter-spacing:.01em}
+.brand p{margin:2px 0 0;color:var(--chalk-dim);font-size:1rem;letter-spacing:.08em;text-transform:uppercase}
+.field{display:flex;flex-direction:column;gap:10px}
+.label{font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--chalk-dim);font-weight:600}
+.plist{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;gap:8px;align-items:center}
+.prow .num{width:26px;flex:none;font-family:var(--display);font-size:1.4rem;color:var(--chalk-dim);text-align:center}
+.prow input{flex:1;min-width:0;height:48px;border-radius:10px;border:1.5px solid var(--line);background:var(--slate-2);color:var(--chalk);
+  font:600 1.25rem var(--ui);padding:0 14px;-webkit-user-select:text;user-select:text}
+.prow input:focus{border-color:var(--sisal);outline:none}
+.prow .rm{width:44px;height:48px;border-radius:10px;color:var(--chalk-dim);font-size:1.6rem;line-height:1}
+.prow .rm:disabled{opacity:.25}
+.ghost{height:46px;border-radius:10px;border:1.5px dashed var(--line);color:var(--chalk-dim);font-weight:600;font-size:1.1rem;letter-spacing:.04em}
+.ghost:disabled{opacity:.35}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--slate-2);border-radius:12px;padding:4px;gap:4px}
+.seg button{height:42px;border-radius:9px;font-weight:600;font-size:1.1rem;color:var(--chalk-dim)}
+.seg button[aria-pressed="true"]{background:var(--chalk);color:var(--slate)}
+.hint{margin:0;color:var(--chalk-dim);font-size:1rem;line-height:1.35;font-weight:500}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;font-size:1.15rem;font-weight:500;cursor:pointer}
+.tog input{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:30px;background:var(--slate-3);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.tog input::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--chalk);transition:transform .2s}
+.tog input:checked{background:var(--green)}
+.tog input:checked::after{transform:translateX(20px)}
+.primary{height:58px;border-radius:14px;background:var(--red);color:#fff;font-weight:700;font-size:1.4rem;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.primary:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.resume{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--slate-2);border:1.5px solid var(--sisal);border-radius:14px;padding:12px 12px 12px 16px}
+.resume b{display:block;font-size:1.2rem}
+.resume span{color:var(--chalk-dim);font-size:1rem}
+.resume button{height:46px;padding:0 18px;border-radius:10px;background:var(--sisal);color:var(--slate);font-weight:700;font-size:1.1rem;flex:none}
+
+/* ---------- Game ---------- */
+#game{padding-left:0;padding-right:0}
+.topbar{display:flex;align-items:center;gap:10px;height:50px;flex:none;padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.iconbtn{width:44px;height:44px;border-radius:10px;display:grid;place-items:center}
+.iconbtn svg{width:24px;height:24px;stroke:var(--chalk);fill:none;stroke-width:2.2;stroke-linecap:round}
+.round{font-family:var(--display);font-size:1.45rem;font-weight:700;flex:1}
+.round small{font-family:var(--ui);color:var(--chalk-dim);font-size:1rem;font-weight:500;margin-left:6px}
+.pill{font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--chalk-dim);border:1px solid var(--line);border-radius:20px;padding:4px 10px}
+
+.board{flex:1;min-height:0;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.row{display:grid;grid-template-columns:var(--lab) repeat(var(--n),minmax(0,1fr)) repeat(3,var(--btn));column-gap:5px;align-items:stretch;border-bottom:1px solid var(--line)}
+.row.target{flex:1 1 0;min-height:42px}
+.row.head{border-bottom:2px solid var(--line)}
+.lab{display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:clamp(1.5rem,6.5vw,2.1rem);line-height:1;position:relative;transition:color .2s}
+.lab.bull{font-size:clamp(1.05rem,4.6vw,1.4rem)}
+.cell{display:grid;place-items:center;min-width:0;transition:background .15s}
+.cell.on{background:var(--slate-3)}
+.cell svg{width:min(34px,90%);height:auto;max-height:80%;overflow:visible}
+.cell svg *{stroke:var(--chalk);stroke-width:3.2;stroke-linecap:round;fill:none}
+.cell.fresh svg :last-child{stroke-dasharray:60;stroke-dashoffset:60;animation:draw .35s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.row.dead .lab{color:var(--chalk-dim);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:rgba(236,233,223,.45)}
+.row.dead .cell svg *{stroke:var(--chalk-dim)}
+.row.dead .tbtn{opacity:.3}
+.row.hot .lab{color:var(--gold)}
+.row.hot .lab::after{content:"pts";position:absolute;bottom:3px;font:600 .62rem/1 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.row.hot.give .lab::after{content:"donne"}
+
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:6px 2px 7px;min-width:0;border-radius:10px 10px 0 0;transition:background .15s}
+.ph.on{background:var(--slate-3)}
+.ph .nm{font-weight:600;font-size:clamp(.85rem,3.7vw,1.05rem);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--chalk-dim);letter-spacing:.02em}
+.ph.on .nm{color:var(--chalk)}
+.ph .sc{font-weight:700;font-size:clamp(1.5rem,7vw,2.2rem);line-height:1;font-variant-numeric:tabular-nums}
+.ph .sc small{font-size:.55em;color:var(--chalk-dim);font-weight:600}
+.ph .mpr{font-size:.75rem;color:var(--chalk-dim);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.ph.on .dot{display:block}
+.ph .dot{display:none;width:22px;height:4px;border-radius:2px;background:var(--red);margin-top:4px}
+.padh{display:grid;place-items:end center;padding-bottom:9px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--chalk-dim);font-weight:600}
+
+.tbtn{margin-block:4px;border-radius:10px;font-weight:700;font-size:clamp(1.05rem,4.4vw,1.35rem);display:grid;place-items:center;transition:transform .08s,filter .08s}
+.tbtn:active{transform:scale(.92);filter:brightness(1.25)}
+.tbtn.s{border:2px solid rgba(236,233,223,.38);color:var(--chalk)}
+.tbtn.d{background:var(--red);color:#fff}
+.tbtn.t{background:var(--green);color:#fff}
+.tbtn.bs{background:var(--green);color:#fff}
+.tbtn.bd{background:var(--red);color:#fff}
+.tbtn.ping{animation:ping .3s}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(236,233,223,.6)}100%{box-shadow:0 0 0 12px rgba(236,233,223,0)}}
+
+.tray{flex:none;background:var(--slate-2);border-top:1px solid var(--line);padding-block:10px 12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px}
+.turnline{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.turnline b{font-size:1.25rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.turnline span{color:var(--chalk-dim);font-size:1rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.darts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dart{height:50px;border-radius:10px;border:1.5px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.dart.next{border-color:rgba(236,233,223,.45)}
+.dart.next::before{content:attr(data-i);color:var(--chalk-dim);font-size:.85rem;letter-spacing:.1em}
+.dart.full{border:1.5px solid transparent;background:var(--slate-3);animation:pop .18s ease-out}
+.dart b{font-size:1.35rem;font-weight:700}
+.dart i{font-style:normal;font-size:.8rem;color:var(--chalk-dim);letter-spacing:.04em}
+.dart.miss b{color:var(--chalk-dim)}
+@keyframes pop{from{transform:scale(.85)}to{transform:scale(1)}}
+.actions{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:8px}
+.actions button{height:54px;border-radius:12px;font-weight:700;font-size:1.2rem;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:6px}
+.actions button:active{transform:scale(.96)}
+.actions button:disabled{opacity:.35}
+#undoBtn{background:var(--slate-3)}
+#missBtn{background:var(--slate-3)}
+#nextBtn{background:var(--chalk);color:var(--slate)}
+#nextBtn.ready{background:var(--sisal);animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{50%{transform:scale(1.04)}}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 150px);background:var(--chalk);color:var(--slate);font-weight:700;font-size:1.1rem;padding:10px 18px;border-radius:30px;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:calc(100% - 32px);text-align:center;z-index:30;pointer-events:none;animation:toast 1.8s ease forwards}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,8px)}10%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+
+/* ---------- Sheets ---------- */
+.modal{position:fixed;inset:0;background:rgba(8,12,10,.72);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--slate-2);width:100%;max-width:520px;max-height:92%;overflow-y:auto;border-radius:20px 20px 0 0;
+  padding-block:22px calc(20px + env(safe-area-inset-bottom,0px));padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:12px;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@media (min-width:600px){.modal{align-items:center}.sheet{border-radius:20px}}
+.sheet h2{font-family:var(--display);font-size:2rem;margin:0;line-height:1.05;text-wrap:balance}
+.sheet .eyebrow{font-size:.85rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.sheet p{margin:0;color:var(--chalk-dim);font-size:1.05rem;line-height:1.4;font-weight:500}
+.sheet .btn{height:52px;border-radius:12px;background:var(--slate-3);font-weight:700;font-size:1.15rem;letter-spacing:.03em}
+.sheet .btn.main{background:var(--red);color:#fff}
+.sheet .btn.link{background:none;color:var(--chalk-dim);height:44px;font-weight:600}
+.sheet .btn.arm{background:var(--gold);color:var(--slate)}
+.rank{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:1.1rem}
+.rank th{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--chalk-dim);font-weight:600;text-align:right;padding:6px 4px}
+.rank th:first-child,.rank td:first-child{text-align:left}
+.rank td{padding:9px 4px;border-top:1px solid var(--line);text-align:right;font-weight:600}
+.rank tr.win td{color:var(--gold)}
+.rules{display:flex;flex-direction:column;gap:10px}
+.rules h3{margin:6px 0 0;font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;color:var(--sisal)}
+.rules p{color:var(--chalk)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<section id="setup" class="screen" aria-label="Nouvelle partie">
+  <header class="brand">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="48" fill="#111814"/>
+      <circle cx="50" cy="50" r="40" fill="#c9392f"/><circle cx="50" cy="50" r="35" fill="#e2d3a8"/>
+      <circle cx="50" cy="50" r="25" fill="#24864d"/><circle cx="50" cy="50" r="20" fill="#e2d3a8"/>
+      <circle cx="50" cy="50" r="8" fill="#24864d"/><circle cx="50" cy="50" r="4" fill="#c9392f"/>
+    </svg>
+    <div><h1>Cricket</h1><p>Comptage de points · fléchettes</p></div>
+  </header>
+
+  <div id="resume" class="resume" hidden>
+    <div><b>Partie en cours</b><span id="resumeInfo"></span></div>
+    <button id="resumeBtn" type="button">Reprendre</button>
+  </div>
+
+  <div class="field">
+    <div class="label">Joueurs</div>
+    <div class="plist" id="plist"></div>
+    <button class="ghost" id="addP" type="button">+ Ajouter un joueur</button>
+  </div>
+
+  <div class="field">
+    <div class="label">Mode de jeu</div>
+    <div class="seg" id="modeSeg">
+      <button type="button" data-v="standard">Classique</button>
+      <button type="button" data-v="cutthroat">Cut-throat</button>
+      <button type="button" data-v="noscore">Sans points</button>
+    </div>
+    <p class="hint" id="modeHint"></p>
+  </div>
+
+  <div class="field">
+    <div class="label">Limite de manches</div>
+    <div class="seg" id="limSeg">
+      <button type="button" data-v="0">Aucune</button>
+      <button type="button" data-v="10">10</button>
+      <button type="button" data-v="15">15</button>
+      <button type="button" data-v="20">20</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="tog" for="optShuffle">Tirer l'ordre au hasard<input type="checkbox" id="optShuffle"></label>
+    <label class="tog" for="optAuto">Joueur suivant auto après 3 fléchettes<input type="checkbox" id="optAuto"></label>
+  </div>
+
+  <button class="primary" id="startBtn" type="button">Lancer la partie</button>
+</section>
+
+<section id="game" class="screen" aria-label="Partie" hidden>
+  <div class="topbar">
+    <button class="iconbtn" id="menuBtn" type="button" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="round" id="roundInfo"></div>
+    <div class="pill" id="modeInfo"></div>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="tray">
+    <div class="turnline"><b id="turnName"></b><span id="turnSum"></span></div>
+    <div class="darts" id="darts"></div>
+    <div class="actions">
+      <button id="undoBtn" type="button">↶ Annuler</button>
+      <button id="missBtn" type="button">Raté</button>
+      <button id="nextBtn" type="button">Suivant ›</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+const T=[20,19,18,17,16,15,25];
+const MODES={
+  standard:{name:'Classique',hint:"Fermez 15 à 20 et le Bull (3 touches chacun). Sur un numéro fermé, vos touches en plus vous rapportent des points tant qu'un adversaire ne l'a pas fermé. Victoire : tout fermé avec le score le plus haut."},
+  cutthroat:{name:'Cut-throat',hint:"Sur un numéro fermé, vos touches en plus donnent des points aux adversaires qui ne l'ont pas fermé. Victoire : tout fermé avec le score le plus bas."},
+  noscore:{name:'Sans points',hint:"Course pure : le premier joueur qui ferme 15 à 20 et le Bull gagne."}
+};
+const KEY='cricket-darts.v1';
+const store={
+  get(k){try{return JSON.parse(localStorage.getItem(KEY+k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){}}
+};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let prefs=Object.assign({names:['Joueur 1','Joueur 2'],mode:'standard',limit:0,shuffle:false,auto:true},store.get('.prefs')||{});
+let G=store.get('.game');   // {players,mode,limit,auto,log:[{t:'d',x,m}|{t:'n',auto}]}
+let S=null;                  // derived state
+if(G&&!(Array.isArray(G.players)&&Array.isArray(G.log)))G=null;
+
+/* ===== Game engine: state is a pure replay of the action log ===== */
+const range=n=>[...Array(n).keys()];
+function replay(g){
+  const n=g.players.length;
+  const s={n,marks:range(n).map(()=>Object.fromEntries(T.map(t=>[t,0]))),score:Array(n).fill(0),eff:Array(n).fill(0),
+    turns:Array(n).fill(0),cur:0,round:1,darts:[],last:null,winner:-1,over:false,reason:'',fresh:null};
+  for(const a of g.log){
+    if(s.over)break;
+    if(a.t==='d')applyDart(s,g,a.x,a.m);else nextTurn(s,g);
+  }
+  return s;
+}
+function applyDart(s,g,t,m){
+  const p=s.cur,d={x:t,m,marks:0,pts:0};
+  s.fresh=null;
+  if(t){
+    const have=s.marks[p][t],close=Math.min(m,3-have),extra=m-close;
+    s.marks[p][t]=have+close;d.marks=close;
+    if(close)s.fresh={p,t};
+    if(extra>0&&g.mode!=='noscore'){
+      const open=range(s.n).filter(q=>q!==p&&s.marks[q][t]<3);
+      if(open.length){
+        const v=extra*(t===25?25:t);
+        if(g.mode==='standard')s.score[p]+=v;else open.forEach(q=>s.score[q]+=v);
+        d.marks+=extra;d.pts=v;
+      }
+    }
+    s.eff[p]+=d.marks;
+  }
+  s.darts.push(d);
+  checkWin(s,g,p);
+}
+const closedAll=(s,p)=>T.every(t=>s.marks[p][t]>=3);
+const closedCount=(s,p)=>T.reduce((a,t)=>a+Math.min(3,s.marks[p][t]),0);
+function checkWin(s,g,first){
+  for(const p of [first,...range(s.n).filter(q=>q!==first)]){
+    if(!closedAll(s,p))continue;
+    const others=s.score.filter((_,q)=>q!==p);
+    const ok=g.mode==='noscore'||(g.mode==='standard'?s.score[p]>=Math.max(...others):s.score[p]<=Math.min(...others));
+    if(ok){s.winner=p;s.over=true;s.reason='closed';return}
+  }
+}
+function nextTurn(s,g){
+  s.last={p:s.cur,darts:s.darts};
+  s.turns[s.cur]++;s.darts=[];s.fresh=null;
+  s.cur=(s.cur+1)%s.n;
+  if(s.cur===0){
+    s.round++;
+    if(g.limit&&s.round>g.limit){s.round=g.limit;s.over=true;s.reason='limit';s.winner=ranking(s,g)[0]}
+  }
+}
+function ranking(s,g){
+  const r=range(s.n).sort((a,b)=>{
+    if(g.mode==='standard'&&s.score[a]!==s.score[b])return s.score[b]-s.score[a];
+    if(g.mode==='cutthroat'&&s.score[a]!==s.score[b])return s.score[a]-s.score[b];
+    return closedCount(s,b)-closedCount(s,a)||s.eff[b]-s.eff[a];
+  });
+  if(s.winner>=0){r.splice(r.indexOf(s.winner),1);r.unshift(s.winner)}
+  return r;
+}
+const mpr=(s,p)=>{const t=s.turns[p]+(p===s.cur&&s.darts.length?1:0);return t?s.eff[p]/t:0};
+const dartLabel=d=>!d.x?'Raté':d.x===25?(d.m===2?'Bull':'25'):['','','D','T'][d.m]+d.x;
+const plural=(n,w)=>n+' '+w+(n>1?'s':'');
+
+/* ===== Board ===== */
+const MARK=[
+  '',
+  '<svg viewBox="0 0 32 32"><path d="M8 25 24 7"/></svg>',
+  '<svg viewBox="0 0 32 32"><path d="M8 25 24 7"/><path d="M8 7 24 25"/></svg>',
+  '<svg viewBox="0 0 32 32"><path d="M8 25 24 7"/><path d="M8 7 24 25"/><circle cx="16" cy="16" r="14.5"/></svg>'
+];
+let cells={},heads=[],rows={};
+function buildBoard(){
+  const b=$('board'),n=G.players.length;
+  b.style.setProperty('--n',n);
+  let h='<div class="row head"><div></div>';
+  G.players.forEach((nm,p)=>{h+=`<div class="ph" id="ph${p}"><span class="nm">${esc(nm)}</span><span class="sc"></span><span class="mpr"></span><span class="dot"></span></div>`});
+  h+='<div class="padh">×1</div><div class="padh">×2</div><div class="padh">×3</div></div>';
+  for(const t of T){
+    h+=`<div class="row target" id="row${t}"><div class="lab${t===25?' bull':''}">${t===25?'Bull':t}</div>`;
+    G.players.forEach((_,p)=>{h+=`<div class="cell" id="c${p}-${t}"></div>`});
+    if(t===25)h+=`<button class="tbtn bs" data-x="25" data-m="1" aria-label="Bull simple 25">25</button><button class="tbtn bd" data-x="25" data-m="2" aria-label="Bull double 50">50</button><div></div>`;
+    else h+=`<button class="tbtn s" data-x="${t}" data-m="1" aria-label="Simple ${t}">S</button><button class="tbtn d" data-x="${t}" data-m="2" aria-label="Double ${t}">D</button><button class="tbtn t" data-x="${t}" data-m="3" aria-label="Triple ${t}">T</button>`;
+    h+='</div>';
+  }
+  b.innerHTML=h;
+  heads=G.players.map((_,p)=>$('ph'+p));
+  cells={};rows={};
+  for(const t of T){rows[t]=$('row'+t);G.players.forEach((_,p)=>cells[p+'-'+t]=$(`c${p}-${t}`))}
+  $('darts').innerHTML=[1,2,3].map(i=>`<div class="dart" data-i="Fléchette ${i}"></div>`).join('');
+}
+
+function render(){
+  if(!G||!S){show('setup');return}
+  const n=S.n,cur=S.cur,live=!S.over;
+  $('roundInfo').innerHTML=`Manche ${S.round}${G.limit?`<small>sur ${G.limit}</small>`:''}`;
+  $('modeInfo').textContent=MODES[G.mode].name;
+  const leader=G.mode==='noscore'?-1:ranking(S,G)[0];
+  heads.forEach((el,p)=>{
+    el.classList.toggle('on',p===cur&&live);
+    el.querySelector('.sc').innerHTML=G.mode==='noscore'?`${T.filter(t=>S.marks[p][t]>=3).length}<small>/7</small>`:S.score[p];
+    el.querySelector('.sc').style.color=(n>1&&p===leader&&S.score[p]!==S.score.find((v,q)=>q!==p&&v===S.score[p]))?'var(--sisal)':'';
+    el.querySelector('.mpr').textContent='MPR '+mpr(S,p).toFixed(2);
+  });
+  for(const t of T){
+    const allClosed=range(n).every(p=>S.marks[p][t]>=3);
+    const canScore=G.mode!=='noscore'&&live&&S.marks[cur][t]>=3&&range(n).some(q=>q!==cur&&S.marks[q][t]<3);
+    rows[t].classList.toggle('dead',allClosed);
+    rows[t].classList.toggle('hot',canScore);
+    rows[t].classList.toggle('give',G.mode==='cutthroat');
+    for(let p=0;p<n;p++){
+      const c=cells[p+'-'+t],m=Math.min(3,S.marks[p][t]);
+      if(c.dataset.m!==String(m)){c.innerHTML=MARK[m];c.dataset.m=m}
+      c.classList.toggle('on',p===cur&&live);
+      c.classList.toggle('fresh',!!(S.fresh&&S.fresh.p===p&&S.fresh.t===t));
+    }
+  }
+  const slots=$('darts').children;
+  for(let i=0;i<3;i++){
+    const d=S.darts[i],el=slots[i];
+    el.className='dart'+(d?' full'+(d.x?'':' miss'):(i===S.darts.length&&live?' next':''));
+    if(d){
+      const key=i+':'+d.x+':'+d.m;
+      if(el.dataset.k!==key){
+        const sub=d.pts?(G.mode==='cutthroat'?`+${d.pts} aux autres`:`+${d.pts} pts`):d.marks?plural(d.marks,'marque'):'—';
+        el.innerHTML=`<b>${dartLabel(d)}</b><i>${sub}</i>`;el.dataset.k=key;
+      }
+    }else{el.innerHTML='';el.dataset.k=''}
+  }
+  const tm=S.darts.reduce((a,d)=>a+d.marks,0),tp=S.darts.reduce((a,d)=>a+d.pts,0);
+  $('turnName').textContent=live?G.players[cur]+' lance':'Partie terminée';
+  $('turnSum').textContent=S.darts.length?plural(tm,'marque')+(tp?` · ${tp} pts`:''):(S.last&&live?`Avant : ${G.players[S.last.p]} ${S.last.darts.map(dartLabel).join(' ')||'—'}`:'');
+  $('undoBtn').disabled=!G.log.length;
+  $('missBtn').disabled=!live||S.darts.length>=3;
+  $('nextBtn').disabled=!live;
+  $('nextBtn').classList.toggle('ready',live&&S.darts.length>=3);
+}
+
+/* ===== Actions ===== */
+function save(){store.set('.game',G)}
+function buzz(){try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}}
+function toast(msg){
+  const old=document.querySelector('.toast');if(old)old.remove();
+  const el=document.createElement('div');el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1900);
+}
+function turnToast(last){
+  if(!last)return;
+  const m=last.darts.reduce((a,d)=>a+d.marks,0),pts=last.darts.reduce((a,d)=>a+d.pts,0);
+  let msg=`${G.players[last.p]} : ${plural(m,'marque')}`;
+  if(pts)msg+=G.mode==='cutthroat'?` · ${pts} pts donnés`:` · +${pts} pts`;
+  if(m>=5)msg+=' · bien joué !';
+  toast(msg);
+}
+function throwDart(x,m,btn){
+  if(!G||S.over)return;
+  if(S.darts.length>=3){toast('3 fléchettes lancées · appuyez sur Suivant');return}
+  buzz();
+  if(btn){btn.classList.remove('ping');void btn.offsetWidth;btn.classList.add('ping')}
+  G.log.push({t:'d',x,m});S=replay(G);
+  if(!S.over&&G.auto&&S.darts.length===3){G.log.push({t:'n',auto:1});S=replay(G);turnToast(S.last)}
+  save();render();
+  if(S.over)setTimeout(showEnd,450);
+}
+function nextPlayer(){
+  if(!G||S.over)return;
+  buzz();G.log.push({t:'n'});S=replay(G);turnToast(S.last);save();render();
+}
+function undo(){
+  if(!G||!G.log.length)return;
+  buzz();
+  const a=G.log.pop();
+  if(a.t==='n'&&a.auto&&G.log.length)G.log.pop();
+  S=replay(G);save();closeModal();render();toast('Dernière fléchette annulée');
+}
+let wake=null;
+async function keepAwake(){
+  try{if('wakeLock' in navigator&&document.visibilityState==='visible'&&!wake){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>wake=null)}}catch(e){}
+}
+function startGame(g){
+  G=g;S=replay(G);save();buildBoard();show('game');render();keepAwake();
+  if(S.over)showEnd();
+}
+function newGameFromSetup(){
+  let names=prefs.names.map((s,i)=>s.trim()||('Joueur '+(i+1)));
+  if(prefs.shuffle)for(let i=names.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
+  store.set('.prefs',prefs);
+  startGame({players:names,mode:prefs.mode,limit:prefs.limit,auto:prefs.auto,log:[]});
+}
+function rematch(){
+  const p=G.players.slice();p.push(p.shift());   // the next player opens
+  closeModal();startGame({players:p,mode:G.mode,limit:G.limit,auto:G.auto,log:[]});
+}
+function restart(){closeModal();startGame({...G,log:[]})}
+
+/* ===== Screens & sheets ===== */
+function show(id){$('setup').hidden=id!=='setup';$('game').hidden=id!=='game';if(id==='setup')renderSetup()}
+function openModal(html){$('sheet').innerHTML=html;$('modal').hidden=false}
+function closeModal(){$('modal').hidden=true;$('sheet').innerHTML=''}
+function showEnd(){
+  const r=ranking(S,G),w=S.winner;
+  const why=S.reason==='limit'?`Limite de ${G.limit} manches atteinte.`:
+    G.mode==='noscore'?'Premier à tout fermer.':`Tout fermé avec ${S.score[w]} points${G.mode==='cutthroat'?' (le plus bas)':''}.`;
+  let rows=r.map((p,i)=>`<tr class="${p===w?'win':''}"><td>${i+1}. ${esc(G.players[p])}</td>${G.mode==='noscore'?'':`<td>${S.score[p]}</td>`}<td>${closedCount(S,p)}/21</td><td>${mpr(S,p).toFixed(2)}</td></tr>`).join('');
+  openModal(`<div class="eyebrow">Victoire</div><h2>${esc(G.players[w])} gagne</h2><p>${why} ${S.round} manche${S.round>1?'s':''} jouée${S.round>1?'s':''}.</p>
+    <table class="rank"><thead><tr><th>Joueur</th>${G.mode==='noscore'?'':'<th>Pts</th>'}<th>Fermé</th><th>MPR</th></tr></thead><tbody>${rows}</tbody></table>
+    <button class="btn main" data-act="rematch">Revanche</button>
+    <button class="btn" data-act="setup">Nouvelle partie</button>
+    <button class="btn link" data-act="undo">↶ Annuler la dernière fléchette</button>`);
+}
+function showMenu(){
+  openModal(`<h2>Menu</h2>
+    <button class="btn main" data-act="close">Reprendre la partie</button>
+    <button class="btn" data-act="rules">Règles du cricket</button>
+    <button class="btn" data-act="restart" data-confirm="Appuyez encore pour recommencer">Recommencer (mêmes joueurs)</button>
+    <button class="btn" data-act="setup">Nouvelle partie</button>
+    <p>La partie est sauvegardée sur ce téléphone : vous pouvez fermer la page et la reprendre plus tard.</p>`);
+}
+function showRules(){
+  openModal(`<h2>Règles du cricket</h2><div class="rules">
+    <h3>Objectif</h3><p>Fermer les numéros 15, 16, 17, 18, 19, 20 et le Bull. Il faut 3 touches pour fermer un numéro : simple = 1, double = 2, triple = 3. Bull extérieur (25) = 1, Bull central (50) = 2.</p>
+    <h3>Marques</h3><p>/ = 1 touche, X = 2 touches, X entouré = numéro fermé.</p>
+    <h3>Points (Classique)</h3><p>Une fois votre numéro fermé, chaque touche en plus vous rapporte sa valeur tant qu'au moins un adversaire ne l'a pas fermé. La ligne passe en doré quand vous pouvez marquer. Quand tout le monde l'a fermé, le numéro est barré.</p>
+    <h3>Cut-throat</h3><p>Les touches en plus donnent les points aux adversaires qui n'ont pas fermé le numéro. Le score le plus bas gagne.</p>
+    <h3>Victoire</h3><p>Le premier qui a tout fermé et qui a le meilleur score (ou à égalité) gagne. Sinon on continue en marquant des points.</p>
+    <h3>MPR</h3><p>Marques par tour : moyenne des touches utiles par volée de 3 fléchettes.</p>
+  </div><button class="btn main" data-act="${G?'menu':'close'}">Retour</button>`);
+}
+
+$('sheet').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  if(b.dataset.confirm&&!b.classList.contains('arm')){
+    const txt=b.textContent;b.classList.add('arm');b.textContent=b.dataset.confirm;
+    setTimeout(()=>{if(b.isConnected){b.classList.remove('arm');b.textContent=txt}},3000);return;
+  }
+  ({close:closeModal,rules:showRules,menu:showMenu,restart,rematch,undo,setup:()=>{closeModal();show('setup')}})[b.dataset.act]();
+});
+$('modal').addEventListener('click',e=>{if(e.target===$('modal')&&!(S&&S.over))closeModal()});
+
+/* ===== Setup ===== */
+function renderSetup(){
+  const pl=$('plist');
+  pl.innerHTML=prefs.names.map((nm,i)=>`<div class="prow"><span class="num">${i+1}</span><input id="pname-${i}" data-i="${i}" maxlength="14" autocomplete="off" enterkeyhint="done" value="${esc(nm)}" aria-label="Nom du joueur ${i+1}"><button class="rm" type="button" data-rm="${i}" aria-label="Retirer le joueur ${i+1}" ${prefs.names.length<=1?'disabled':''}>×</button></div>`).join('');
+  $('addP').disabled=prefs.names.length>=6;
+  for(const b of $('modeSeg').children)b.setAttribute('aria-pressed',b.dataset.v===prefs.mode);
+  for(const b of $('limSeg').children)b.setAttribute('aria-pressed',+b.dataset.v===prefs.limit);
+  $('modeHint').textContent=MODES[prefs.mode].hint;
+  $('optShuffle').checked=prefs.shuffle;$('optAuto').checked=prefs.auto;
+  const live=G&&S&&!S.over&&G.log.length>0;
+  $('resume').hidden=!live;
+  if(live)$('resumeInfo').textContent=`${G.players.join(', ')} · manche ${S.round}`;
+}
+$('plist').addEventListener('input',e=>{if(e.target.dataset.i!=null){prefs.names[+e.target.dataset.i]=e.target.value;store.set('.prefs',prefs)}});
+$('plist').addEventListener('focusin',e=>{if(e.target.tagName==='INPUT')e.target.select()});
+$('plist').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;prefs.names.splice(+b.dataset.rm,1);store.set('.prefs',prefs);renderSetup()});
+$('addP').addEventListener('click',()=>{if(prefs.names.length<6){prefs.names.push('Joueur '+(prefs.names.length+1));store.set('.prefs',prefs);renderSetup()}});
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){prefs.mode=b.dataset.v;store.set('.prefs',prefs);renderSetup()}});
+$('limSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){prefs.limit=+b.dataset.v;store.set('.prefs',prefs);renderSetup()}});
+$('optShuffle').addEventListener('change',e=>{prefs.shuffle=e.target.checked;store.set('.prefs',prefs)});
+$('optAuto').addEventListener('change',e=>{prefs.auto=e.target.checked;store.set('.prefs',prefs)});
+$('startBtn').addEventListener('click',newGameFromSetup);
+$('resumeBtn').addEventListener('click',()=>startGame(G));
+
+/* ===== Game input ===== */
+$('board').addEventListener('click',e=>{const b=e.target.closest('.tbtn');if(b)throwDart(+b.dataset.x,+b.dataset.m,b)});
+$('missBtn').addEventListener('click',()=>throwDart(0,1));
+$('nextBtn').addEventListener('click',nextPlayer);
+$('undoBtn').addEventListener('click',undo);
+$('menuBtn').addEventListener('click',showMenu);
+document.addEventListener('visibilitychange',()=>{if(!$('game').hidden)keepAwake()});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!$('modal').hidden&&!(S&&S.over))closeModal();
+  if($('game').hidden||!$('modal').hidden)return;
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo()}
+});
+
+/* ===== Boot ===== */
+if(G){S=replay(G);if(!S.over&&G.log.length){buildBoard();show('game');render();keepAwake()}else show('setup')}
+else show('setup');
+
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&document.querySelector('link[rel="manifest"]')){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+})();
+</script>
+<!-- app:end -->
+</body>
+</html>
